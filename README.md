@@ -1,2 +1,7 @@
-# oim3640
-Course work for OIM3640
+# OIM3640 - 2026 Spring
+This is my course repository for OIM3640.
+
+## About Me
+- Name: Amelia Smith
+- Concentration: Business Analytics
+- Interests: My cat (Oliver) :cat:, hiking, traveling
