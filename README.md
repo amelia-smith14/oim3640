@@ -4,4 +4,4 @@ This is my course repository for OIM3640.
 ## About Me
 - Name: Amelia Smith
 - Concentration: Business Analytics
-- Interests: My cat (Oliver) :cat:, hiking, traveling
+- Interests: My cat (Oliver) :black cat:, hiking, traveling
