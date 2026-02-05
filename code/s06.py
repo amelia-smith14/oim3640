@@ -13,3 +13,33 @@ print(a)
 a.append(4)
 print(a)
 #add to list
+
+"""
+🧱🧱🧱
+🧱🧱🧱
+🧱🧱🧱
+"""
+
+def draw_square(size):
+    for i in range(size):
+        print("🧱"*size)
+
+draw_square(3)
+
+def draw_triangle(size):
+    for i in range(size):
+        print("🧱" * (i+1))
+
+draw_triangle(4)
+
+def draw_righttriangle(size):
+    for i in range(size):
+        print(" " * (size-i-1), "#" * (i+1))
+
+draw_righttriangle(4)
+
+def draw_pyramid(size):
+    for i in range(size):
+        print(" " * (size - i - 1)), print ("#" * (i+1)), print(" " * (size - i - 1))
+
+draw_pyramid(5)
