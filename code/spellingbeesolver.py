@@ -5,8 +5,8 @@ def uses_only(word, letters):
             return False
     return True
 
-print(uses_only('cake', 'kcboela'))
-print(uses_only('babson', 'kcboela'))
+#print(uses_only('cake', 'kcboela'))
+#print(uses_only('babson', 'kcboela'))
 
 def must_use(word, letters):
     """Does word use all of the required letters at least once?"""
@@ -15,7 +15,7 @@ def must_use(word, letters):
             return False
     return True
 
-print(must_use('cake', 'a'))
+#print(must_use('cake', 'a'))
 
 def is_valid_word(word, required_letters, allowed_letters):
     """Is word valid based on required and allowed letters?"""
