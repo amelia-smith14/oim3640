@@ -9,3 +9,5 @@ This is my course repository for OIM3640.
 ## My Projects
 - [First Project](./projects/miniproject1.py)
     - [Proposal](./logs/PROPOSAL.md)
+- [Second Project](./projects/miniproject2.py)
+    - [Proposal](./logs/PROPOSAL2.md)
