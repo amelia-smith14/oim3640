@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Square Calculator</title>
+</head>
+<body>
+    <h1>Square Calculator</h1>
+    <form action="/square" method="post">
+        <label for="number">Enter a number:</label>
+        <input type="text" id="number" name="number">
+        <input type="submit" value="Calculate Square">
+    </form>
+    {% if result is not none %}
+        <h2>Result: {{ result }}</h2>
+    {% endif %}
+</body>
+</html>
