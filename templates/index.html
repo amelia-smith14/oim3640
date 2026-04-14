@@ -68,7 +68,8 @@
 <body>
     <div class="container">
         <h1>NYC Public Bathroom Finder</h1>
-        <p>Click the button below to find the closest public bathroom to your current location in New York City.</p>
+        <p>Enter a New York City address or location name to find the closest public bathroom.</p>
+        <input id="addressInput" type="text" placeholder="Enter address or location" style="width:100%; padding:12px; margin-bottom:16px; font-size:16px;" />
         <button id="findButton" onclick="findClosestBathroom()">Find Closest Bathroom</button>
         <div id="result"></div>
     </div>
@@ -77,61 +78,39 @@
         async function findClosestBathroom() {
             const button = document.getElementById('findButton');
             const resultDiv = document.getElementById('result');
+            const address = document.getElementById('addressInput').value.trim();
 
-            button.disabled = true;
-            button.textContent = 'Getting your location...';
-            resultDiv.style.display = 'none';
-
-            if (!navigator.geolocation) {
-                showError('Geolocation is not supported by this browser.');
+            if (!address) {
+                showError('Please enter an address or location.');
                 return;
             }
 
-            navigator.geolocation.getCurrentPosition(async (position) => {
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
+            button.disabled = true;
+            button.textContent = 'Searching...';
+            resultDiv.style.display = 'none';
 
-                button.textContent = 'Finding closest bathroom...';
+            try {
+                const response = await fetch('/find_closest', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ address }),
+                });
 
-                try {
-                    const response = await fetch('/find_closest', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ lat: lat, lng: lng }),
-                    });
+                const result = await response.json();
 
-                    const result = await response.json();
-
-                    if (result.error) {
-                        showError(result.error);
-                    } else {
-                        showSuccess(result);
-                    }
-                } catch (error) {
-                    showError('An error occurred while finding bathrooms.');
-                } finally {
-                    button.disabled = false;
-                    button.textContent = 'Find Closest Bathroom';
+                if (result.error) {
+                    showError(result.error);
+                } else {
+                    showSuccess(result);
                 }
-            }, (error) => {
-                let errorMessage = 'Unable to get your location.';
-                switch(error.code) {
-                    case error.PERMISSION_DENIED:
-                        errorMessage = 'Location access denied. Please allow location access and try again.';
-                        break;
-                    case error.POSITION_UNAVAILABLE:
-                        errorMessage = 'Location information is unavailable.';
-                        break;
-                    case error.TIMEOUT:
-                        errorMessage = 'Location request timed out.';
-                        break;
-                }
-                showError(errorMessage);
+            } catch (error) {
+                showError('An error occurred while searching for bathrooms.');
+            } finally {
                 button.disabled = false;
                 button.textContent = 'Find Closest Bathroom';
-            });
+            }
         }
 
         function showSuccess(data) {
@@ -139,6 +118,7 @@
             resultDiv.className = 'success';
             resultDiv.innerHTML = `
                 <h3>Closest Public Bathroom Found!</h3>
+                <p><strong>Search location:</strong> ${data.search_location}</p>
                 <p><strong>Name:</strong> ${data.name}</p>
                 <p><strong>Address:</strong> ${data.address}</p>
                 <p><strong>Borough:</strong> ${data.borough}</p>
