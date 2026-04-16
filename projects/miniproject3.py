@@ -68,6 +68,11 @@ def find_closest():
         if location is None:
             return jsonify({'error': 'Could not find that location. Please enter a more specific address.'})
 
+        # Validate that the location is within NYC bounds
+        # NYC latitude: ~40.5 to 40.9, longitude: ~-74.3 to -73.7
+        if not (40.5 <= location.latitude <= 40.9) or not (-74.3 <= location.longitude <= -73.7):
+            return jsonify({'error': 'This location appears to be outside of New York City. Please enter an address within NYC.'})
+
         user_location = (location.latitude, location.longitude)
 
         closest = None
@@ -81,13 +86,17 @@ def find_closest():
                 closest = restroom
 
         if closest:
-            result = {
-                'name': closest['name'],
-                'address': closest['address'],
-                'borough': closest['borough'],
-                'distance': round(min_distance, 2),
-                'search_location': location.address,
-            }
+            # Check if the closest restroom is within 1 mile
+            if min_distance <= 1.0:
+                result = {
+                    'name': closest['name'],
+                    'address': closest['address'],
+                    'borough': closest['borough'],
+                    'distance': round(min_distance, 2),
+                    'search_location': location.address,
+                }
+            else:
+                result = {'error': f'No public restrooms found within 1 mile of your location. The closest restroom is {round(min_distance, 1)} miles away at {closest["name"]}.'}
         else:
             result = {'error': 'No public restrooms found in this area. Try a different location.'}
 
