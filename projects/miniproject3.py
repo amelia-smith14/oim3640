@@ -6,57 +6,11 @@ from geopy.geocoders import Nominatim
 app = Flask(__name__, template_folder='../templates')
 
 geocoder = Nominatim(user_agent='nyc_bathroom_finder')
+API_URL = "https://data.cityofnewyork.us/resource/xi7c-iiu2.json?$limit=5000"
 
 @app.route('/')
 def home():
     return render_template('index.html')
-
-def get_osm_restrooms(lat, lng, radius=5000):
-    """
-    Query Overpass API for public restrooms near coordinates.
-    Radius in meters (default 5km)
-    """
-    overpass_url = "https://overpass-api.de/api/interpreter"
-    
-    # Overpass query for toilets and restrooms
-    overpass_query = f"""
-    [out:json];
-    (
-      node["amenity"="toilets"](around:{radius},{lat},{lng});
-      way["amenity"="toilets"](around:{radius},{lat},{lng});
-      relation["amenity"="toilets"](around:{radius},{lat},{lng});
-      node["amenity"="restroom"](around:{radius},{lat},{lng});
-      way["amenity"="restroom"](around:{radius},{lat},{lng});
-    );
-    out center;
-    """
-    
-    try:
-        response = requests.get(overpass_url, params={'data': overpass_query}, timeout=15)
-        data = response.json()
-        
-        restrooms = []
-        for element in data.get('elements', []):
-            # Get coordinates
-            if 'lat' in element and 'lon' in element:
-                restrooms.append({
-                    'lat': element['lat'],
-                    'lng': element['lon'],
-                    'name': element.get('tags', {}).get('name', 'Public Restroom'),
-                    'address': element.get('tags', {}).get('addr:full', 'Address not available'),
-                })
-            elif 'center' in element:
-                restrooms.append({
-                    'lat': element['center']['lat'],
-                    'lng': element['center']['lon'],
-                    'name': element.get('tags', {}).get('name', 'Public Restroom'),
-                    'address': element.get('tags', {}).get('addr:full', 'Address not available'),
-                })
-        
-        return restrooms
-    except Exception as e:
-        print(f"Overpass API error: {e}")
-        return []
 
 @app.route('/find_closest', methods=['POST'])
 def find_closest():
@@ -73,31 +27,46 @@ def find_closest():
 
         user_location = (location.latitude, location.longitude)
 
-        # Get restrooms from OpenStreetMap
-        restrooms = get_osm_restrooms(location.latitude, location.longitude, radius=5000)
-
-        if not restrooms:
-            return jsonify({'error': 'No public restrooms found in this area. Try a different location.'})
+        response = requests.get(API_URL, timeout=15)
+        toilets = response.json()
 
         closest = None
         min_distance = float('inf')
 
-        for restroom in restrooms:
-            restroom_location = (restroom['lat'], restroom['lng'])
-            distance = geodesic(user_location, restroom_location).miles
-            if distance < min_distance:
-                min_distance = distance
-                closest = restroom
+        for toilet in toilets:
+            # Try different coordinate field formats
+            lat = lng = None
+
+            # Check for location object with lat/lng
+            if 'location' in toilet and isinstance(toilet['location'], dict):
+                if 'latitude' in toilet['location'] and 'longitude' in toilet['location']:
+                    lat = float(toilet['location']['latitude'])
+                    lng = float(toilet['location']['longitude'])
+                elif 'coordinates' in toilet['location'] and isinstance(toilet['location']['coordinates'], list):
+                    lng, lat = toilet['location']['coordinates']
+
+            # Check for direct lat/lng fields
+            elif 'latitude' in toilet and 'longitude' in toilet:
+                lat = float(toilet['latitude'])
+                lng = float(toilet['longitude'])
+
+            if lat is not None and lng is not None:
+                toilet_location = (lat, lng)
+                distance = geodesic(user_location, toilet_location).miles
+                if distance < min_distance:
+                    min_distance = distance
+                    closest = toilet
 
         if closest:
             result = {
-                'name': closest['name'],
-                'address': closest['address'],
+                'name': closest.get('name', 'Public Restroom'),
+                'address': closest.get('address', 'Address not available'),
+                'borough': closest.get('borough', 'Unknown'),
                 'distance': round(min_distance, 2),
                 'search_location': location.address,
             }
         else:
-            result = {'error': 'No restrooms found'}
+            result = {'error': 'No public restrooms found in this area. Try a different location.'}
 
     except Exception as e:
         result = {'error': f'Error: {str(e)}'[:100]}
